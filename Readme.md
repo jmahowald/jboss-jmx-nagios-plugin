@@ -12,9 +12,11 @@ cpan
 install Class::Accessor Config::Tiny Math::Calc::Units Params::Validate
 
 `wget http://cpan.uwinnipeg.ca/cpan/authors/id/T/TO/TONVOON/Nagios-Plugin-0.35.tar.gz`
+
 `tar xzf Nagios-Plugin-0.35.tar.gz` 
 
 `cd Nagios-Plugin-0.35`
+
 `perl Makefile.PL`
 `make`
 `make test`
