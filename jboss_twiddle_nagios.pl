@@ -28,7 +28,6 @@ use File::Basename;
 $PROGNAME = basename($0);
 
 
-$ENV{'PATH'} = "/usr/local/angel.com/jboss/bin:$ENV{'PATH'}";
 ##############################################################################
 # define and get the command line options.
 #   see the command line option guidelines at 
@@ -42,7 +41,7 @@ my $p = Nagios::Plugin->new(
     [ -w|--warning=<warning threshold> ]  
     [ -r|--result = <INTEGER> ]",
     version => $VERSION,
-    blurb => 'This plugin get\'s a single number back from jmx.', 
+    blurb => 'This plugin is an example of a Nagios plugin written in Perl using the Nagios::Plugin modules.  It will generate a random integer between 1 and 20 (though you can specify the number with the -n option for testing), and will output OK, WARNING or CRITICAL if the resulting number is outside the specified thresholds.', 
 
 	extra => "
 
@@ -83,6 +82,8 @@ qq{-w, --warning=INTEGER:INTEGER
    Minimum and maximum number of allowable result, outside of which a
    warning will be generated.  If omitted, no warning is generated.},
 
+#	required => 1,
+#	default => 10,
 );
 
 $p->add_arg(
@@ -94,25 +95,11 @@ qq{-c, --critical=INTEGER:INTEGER
 );
 
 $p->add_arg(
-	spec => 'username|u=f',
+	spec => 'result|r=f',
 	help => 
-qq{-u, --username=username
-   Specify the jmx server username.},
-);
-
-$p->add_arg(
-	spec => 'password|p=f',
-	help => 
-qq{-u, --password=username
-   Specify the jmx server password.},
-);
-
-
-$p->add_arg(
-	spec => 'H|host=f',
-	help => 
-qq{-r, --host=hostname
-   Specify the host to connect to.},
+qq{-r, --result=INTEGER
+   Specify the result on the command line rather than generating a
+   random number.  For testing.},
 );
 
 # Parse arguments and process standard ones (e.g. usage, help, version)
@@ -136,18 +123,15 @@ unless ( defined $p->opts->warning || defined $p->opts->critical ) {
 # THIS is where you'd do your actual checking to get a real value for $result
 #  don't forget to timeout after $p->opts->timeout seconds, if applicable.
 my $result;
-$result = `twiddle.sh -s $p->opts->host -u $p->opts->username -p admin get jboss.system:type=ServerInfo FreeMemory`;
-
-print "Output was $result \n" if $p->opts->verbose;
-# if (defined $p->opts->result) {  # you got a 'result' option from the command line options
-#     $result = $p->opts->result;
-#     print " using supplied result $result from command line \n
-#   " if $p->opts->verbose;
-# }
-# else {
-#     $result = int rand(20)+1;
-#     print " generated random result $result\n " if $p->opts->verbose;
-# }
+if (defined $p->opts->result) {  # you got a 'result' option from the command line options
+    $result = $p->opts->result;
+    print " using supplied result $result from command line \n
+  " if $p->opts->verbose;
+}
+else {
+    $result = int rand(20)+1;
+    print " generated random result $result\n " if $p->opts->verbose;
+}
 
 
 ##############################################################################
@@ -161,3 +145,6 @@ $p->nagios_exit(
 
 
 
+
+
+print "Output is $output";
