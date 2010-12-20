@@ -196,7 +196,7 @@ else {
 # output the result and exit
 $p->nagios_exit( 
 	 return_code => $p->check_threshold($result), 
-	 message => " sample result was $result" 
+	 message =>  $result 
 );
 
 
