@@ -36,10 +36,10 @@ $PROGNAME = basename($0);
 
 # Instantiate Nagios::Plugin object (the 'usage' parameter is mandatory)
 my $p = Nagios::Plugin->new(
-    usage => "Usage: %s [ -v|--verbose ]  [-H <host>] [-t <timeout>]
+    usage => "Usage: %s [ -v|--verbose ]  -H <host> -u <username> -p <password> -m <mbean> -a <attribute>
     [ -c|--critical=<critical threshold> ] 
     [ -w|--warning=<warning threshold> ]  
-    [ -r|--result = <INTEGER> ]",
+    ",
     version => $VERSION,
     blurb => 'This plugin is an example of a Nagios plugin written in Perl using the Nagios::Plugin modules.  It will generate a random integer between 1 and 20 (though you can specify the number with the -n option for testing), and will output OK, WARNING or CRITICAL if the resulting number is outside the specified thresholds.', 
 
@@ -102,6 +102,47 @@ qq{-r, --result=INTEGER
    random number.  For testing.},
 );
 
+$p->add_arg(
+	spec => 'host|H=s',
+	help => 
+qq{-H, --host=name
+   Specify the server to do this against.},
+	required => 1
+);
+
+
+$p->add_arg(
+	spec => 'username|u=s',
+	help => 
+qq{-u, --username=name
+   Specify the username to login with.},
+   required => 1
+);
+
+$p->add_arg(
+	spec => 'password|p=s',
+	help => 
+qq{-p, --password=pasword
+   Specify the password to use},
+  required => 1
+);
+
+$p->add_arg(
+	spec => 'mbean|m=s',
+	help => 
+qq{-m, --mbean=mbean description
+   Specify the mbean to check},
+	required => 1
+);
+
+$p->add_arg(
+	spec => 'attribute|a=s',
+	help => 
+qq{-a, --attribute=attribute description
+   Specify the attribute to check},
+	required => 1
+);
+
 # Parse arguments and process standard ones (e.g. usage, help, version)
 $p->getopts;
 
@@ -116,6 +157,14 @@ unless ( defined $p->opts->warning || defined $p->opts->critical ) {
 }
 
 
+unless ( defined $p->opts->host) {
+	$p->nagios_die( " you didn't supply a host argument " );
+}
+
+
+unless ( defined $p->opts->username && (defined $p->opts->password)) {
+	$p->nagios_die( " you didn't supply username and password " );
+}
 
 ##############################################################################
 # check stuff.
@@ -123,14 +172,22 @@ unless ( defined $p->opts->warning || defined $p->opts->critical ) {
 # THIS is where you'd do your actual checking to get a real value for $result
 #  don't forget to timeout after $p->opts->timeout seconds, if applicable.
 my $result;
-if (defined $p->opts->result) {  # you got a 'result' option from the command line options
-    $result = $p->opts->result;
-    print " using supplied result $result from command line \n
-  " if $p->opts->verbose;
+my $host = $p->opts->host;
+my $username = $p->opts->username;
+my $password = $p->opts->password;
+my $mbean = $p->opts->mbean;
+my $attribute = $p->opts->attribute;
+
+
+my $twiddle_result = `twiddle.sh -s $host -u $username -p $password get $mbean $attribute`;
+
+print "Twiddle output was $twiddle_result " if $p->opts->verbose;
+
+if($twiddle_result =~ /=(.*)/) {
+	$result = $1;
 }
 else {
-    $result = int rand(20)+1;
-    print " generated random result $result\n " if $p->opts->verbose;
+	$p->nagios_die( " didn't get expected output from twiddle $twiddle_result " );	
 }
 
 
@@ -146,5 +203,3 @@ $p->nagios_exit(
 
 
 
-
-print "Output is $output";
